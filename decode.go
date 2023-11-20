@@ -1,6 +1,7 @@
 package jmp
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -213,8 +214,14 @@ func (d *decoder) asStringByteByLength(offset int, l int, k reflect.Kind) ([]byt
 	return d.readSizeN(offset, l)
 }
 
+// fixmap stores a map whose length is upto 15 elements
+// +--------+~~~~~~~~~~~~~~~~~+
+// |1000XXXX|   N*2 objects   |
+// +--------+~~~~~~~~~~~~~~~~~+
+//
+// * XXXX is a 4-bit unsigned integer which represents N
 func (d *decoder) isFixMap(v byte) bool {
-	return FixMap <= v && v <= FixMap+0x0f
+	return FixMap <= v && v <= FixMap+FixMapMaxSize
 }
 
 func (d *decoder) mapLength(offset int, k reflect.Kind) (int, int, error) {
@@ -296,7 +303,7 @@ func (d *decoder) setStruct(rv reflect.Value, offset int, k reflect.Kind) (int, 
 
 		fieldIndex := -1
 		for keyIndex, keyBytes := range tm.keys {
-			if len(keyBytes) != len(dataKey) {
+			if len(keyBytes) != len(dataKey) || !bytes.Equal(keyBytes, dataKey) {
 				continue
 			}
 

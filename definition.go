@@ -11,6 +11,7 @@ const (
 	PositiveFixIntMax = 0x7f
 
 	FixMap   = 0x80
+	FixMapMaxSize = 0x0f
 	FixArray = 0x90
 	FixStr   = 0xa0
 
